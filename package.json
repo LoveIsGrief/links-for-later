@@ -1,0 +1,17 @@
+{
+  "title": "Links for later",
+  "name": "links-for-later",
+  "version": "0.0.2",
+  "description": "Save links that you want to look at for later.",
+  "main": "index.js",
+  "author": "LoveIsGrief",
+  "engines": {
+    "firefox": ">=38.0a1",
+    "fennec": ">=38.0a1"
+  },
+  "license": "MIT",
+  "keywords": [
+    "jetpack"
+  ],
+  "icons": "icon-48.png"
+}
