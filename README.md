@@ -1,2 +1,2 @@
-#My Jetpack Addon
-A basic add-on
+# links-for-later
+A local, serverless, pocket-like firefox addon.
