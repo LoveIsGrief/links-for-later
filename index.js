@@ -17,27 +17,39 @@ var urls = require("sdk/url");
 
 // Init storage if necessary
 if (!storage.links) {
-    storage.links = [];
+    storage.links = {};
+}
+// Migrate from old links
+if (storage.links instanceof Array) {
+    // Make a copy before processing it
+    var temp = storage.links.map((link) => link);
+    storage.links = {};
+    temp.forEach(saveLink);
 }
 
-//Cache all titles
-var titles = {};
-function cacheTitle(link) {
+//Get the title of a link and save it
+function saveLink(link) {
     var page = Page({
         contentScriptFile: "./scripts/getTitle.js",
         contentURL: link
     });
     page.port.on("title", function (title) {
         console.log("caching title ", title, "for", link);
-        titles[link] = title;
+        storage.links[link] = title;
         page.contentURL = "about:blank";
+        updateBadge();
     });
     page.port.on("destroy", function () {
         page.destroy();
     });
 }
 
-storage.links.forEach(cacheTitle);
+/**
+ * Makes sure the badge shows how many links we've saved
+ */
+function updateBadge() {
+    button.badge = Object.keys(storage.links).length || "";
+}
 
 function handleHide() {
     button.state("window", {checked: false});
@@ -45,16 +57,16 @@ function handleHide() {
 
 function getLinks() {
     var links = [];
-    storage.links.forEach(function (link) {
+    for (let link in storage.links) {
         links.push({
             href: link,
             domain: urls.URL(link).host,
-            title: titles[link] || link
+            title: storage.links[link] || link
         });
-    });
+    }
     console.log("got links", links);
     return links;
-};
+}
 
 var panel = panels.Panel({
     contentURL: "./html/panel.html",
@@ -67,8 +79,8 @@ var panel = panels.Panel({
 
 panel.port.on("openLink", function (url) {
     console.log("opening", url);
-    storage.links.splice(storage.links.indexOf(url), 1);
-    button.badge = storage.links.length || "";
+    delete storage.links[url];
+    updateBadge();
     tabs.open(url);
 });
 
@@ -82,7 +94,7 @@ var button = buttons.ToggleButton({
     },
     onChange: handleOnChange
 });
-button.badge = storage.links.length || "";
+updateBadge();
 
 function handleOnChange(state) {
     if (state.checked) {
@@ -112,15 +124,12 @@ function predicate(context) {
 }
 
 /**
- * TODO Save the link to the db
  *
  * @param url {String}
  */
 function saveLinkForLater(url) {
-    if (!storage.links.includes(url)) {
-        storage.links.push(url);
-        cacheTitle(url);
-        button.badge = storage.links.length;
+    if (storage.links[url] === undefined) {
+        saveLink(url);
     }
 }
 
