@@ -38,6 +38,7 @@ jspm_packages
 
 # Firefox stuff
 *.xpi
+.tmp
 
 # PyCharm stuff
 .idea
