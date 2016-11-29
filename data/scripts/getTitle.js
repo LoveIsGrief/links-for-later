@@ -1,12 +1,12 @@
 var title = document.title;
-if(!title){
+if (!title) {
     var titleTags = document.getElementsByTagName("title");
-    if(titleTags.length > 0){
-	title = titleTags[0].text;
+    if (titleTags.length > 0) {
+        title = titleTags[0].text;
     }
 }
-if(title){
+if (title) {
     self.port.emit("title", title);
-} else{
+} else {
     self.port.emit("destroy");
 }
