@@ -19,13 +19,6 @@ var urls = require("sdk/url");
 if (!storage.links) {
     storage.links = {};
 }
-// Migrate from old links
-if (storage.links instanceof Array) {
-    // Make a copy before processing it
-    var temp = storage.links.map((link) => link);
-    storage.links = {};
-    temp.forEach(saveLink);
-}
 
 //Get the title of a link and save it
 function saveLink(link) {
@@ -42,6 +35,16 @@ function saveLink(link) {
     page.port.on("destroy", function () {
         page.destroy();
     });
+}
+
+// Migrate from old links which were in an array
+// For some reason `instanceof Array` doesn't yield true
+if (storage.links.length !== undefined) {
+    console.log("migrating links");
+    // Make a copy before processing it
+    var temp = storage.links.map((link) => link);
+    storage.links = {};
+    temp.forEach(saveLink);
 }
 
 /**
