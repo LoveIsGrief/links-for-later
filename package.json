@@ -13,5 +13,12 @@
   "keywords": [
     "jetpack"
   ],
-  "icons": "icon-48.png"
+  "icons": "icon-48.png",
+  "devDependencies": {
+    "jpm": "^1.2.2"
+  },
+  "scripts": {
+    "start": "node_modules/.bin/jpm run",
+    "start persistent": "mkdir -p .tmp/profile ; node_modules/.bin/jpm run --profile .tmp/profile --no-copy"
+  }
 }
