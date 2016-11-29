@@ -1,0 +1,9 @@
+# https://developer.mozilla.org/en-US/Add-ons/SDK/Tools/jpmignore
+.*
+*
+!/data/**
+!/package.json
+!/icon.png
+!/LICENSE
+!/README.md
+!/index.js
