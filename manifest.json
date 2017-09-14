@@ -1,0 +1,25 @@
+{
+  "manifest_version": 2,
+  "name": "Links for later",
+  "version": "1.0.0",
+  "description": "Save links that you want to look at for later.",
+  "main": "index.js",
+  "author": "LoveIsGrief",
+  "keywords": [
+    "webextension",
+    "save for later",
+    "pocket"
+  ],
+  "icons": {
+    "48": "data/icon-48.png"
+  },
+  "browser_action": {
+    "browser_style": true,
+    "default_icon": "data/icon-64.png",
+    "default_popup": "popup/panel.html",
+    "default_title": "Save link for later"
+  },
+  "permissions": [
+    "storage"
+  ]
+}
