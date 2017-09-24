@@ -19,7 +19,14 @@
     "default_popup": "popup/panel.html",
     "default_title": "Save link for later"
   },
+  "background": {
+    "scripts": [
+      "lib/common.js",
+      "index.js"
+    ]
+  },
   "permissions": [
+    "contextMenus",
     "storage"
   ]
 }

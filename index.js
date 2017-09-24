@@ -6,109 +6,33 @@
  * which tabs have.
  */
 
-var contextMenu = require("sdk/context-menu");
-var buttons = require('sdk/ui/button/toggle');
-var Page = require("sdk/page-worker").Page;
-var panels = require("sdk/panel");
-var self = require("sdk/self");
-var storage = require("sdk/simple-storage").storage;
-var tabs = require("sdk/tabs");
-var urls = require("sdk/url");
-
-// Init storage if necessary
-if (!storage.links) {
-    storage.links = {};
-}
+var storage = browser.storage.local;
 
 //Get the title of a link and save it
-function saveLink(link) {
-    var page = Page({
-        contentScriptFile: "./scripts/getTitle.js",
-        contentURL: link
-    });
-    page.port.on("title", function (title) {
-        console.log("caching title ", title, "for", link);
-        storage.links[link] = title;
-        page.contentURL = "about:blank";
+function saveLink({srcUrl, pageUrl}) {
+    var link = srcUrl || pageUrl;
+    var linkStore = {};
+    linkStore[link] = link;
+    storage.set(linkStore).then(()=>{
         updateBadge();
     });
-    page.port.on("destroy", function () {
-        page.destroy();
-    });
+    // TODO get page title
+    // var page = Page({
+    //     contentScriptFile: "./scripts/getTitle.js",
+    //     contentURL: link
+    // });
+    // page.port.on("title", function (title) {
+    //     console.log("caching title ", title, "for", link);
+    //     storage.links[link] = title;
+    //     page.contentURL = "about:blank";
+    //     updateBadge();
+    // });
+    // page.port.on("destroy", function () {
+    //     page.destroy();
+    // });
 }
 
-// Migrate from old links which were in an array
-// For some reason `instanceof Array` doesn't yield true
-if (storage.links.length !== undefined) {
-    console.log("migrating links");
-    // Make a copy before processing it
-    var temp = storage.links.map((link) => link);
-    storage.links = {};
-    temp.forEach(saveLink);
-}
 
-/**
- * Makes sure the badge shows how many links we've saved
- */
-function updateBadge() {
-    button.badge = Object.keys(storage.links).length || "";
-}
-
-function handleHide() {
-    button.state("window", {checked: false});
-}
-
-function getLinks() {
-    var links = [];
-    for (let link in storage.links) {
-        links.push({
-            href: link,
-            domain: urls.URL(link).host,
-            title: storage.links[link] || link
-        });
-    }
-    console.log("got links", links);
-    return links;
-}
-
-var panel = panels.Panel({
-    contentURL: "./html/panel.html",
-    contentScriptFile: [
-        "./scripts/jquery.min.js",
-        "./scripts/panel.js"
-    ],
-    onHide: handleHide
-});
-
-panel.port.on("openLink", function (url) {
-    console.log("opening", url);
-    delete storage.links[url];
-    updateBadge();
-    tabs.open(url);
-});
-
-var button = buttons.ToggleButton({
-    id: "mozilla-link",
-    label: "Links for later",
-    icon: {
-        "16": "./icon-16.png",
-        "32": "./icon-32.png",
-        "64": "./icon-64.png"
-    },
-    onChange: handleOnChange
-});
-updateBadge();
-
-function handleOnChange(state) {
-    if (state.checked) {
-        panel.port.emit("show", getLinks());
-        panel.show({
-            position: button,
-        });
-    }
-}
-
-var menuItem;
 /**
  * Depending on the type of item clicked, we should change the title
  *
@@ -126,20 +50,17 @@ function predicate(context) {
     return true
 }
 
-/**
- *
- * @param url {String}
- */
-function saveLinkForLater(url) {
-    if (storage.links[url] === undefined) {
-        saveLink(url);
-    }
-}
+updateBadge();
 
-menuItem = contextMenu.Item({
-    label: "Watch link later",
-    context: contextMenu.PredicateContext(predicate),
-    contentScriptFile: "./scripts/menuItemClick.js",
-    image: self.data.url("icon-16.png"),
-    onMessage: saveLinkForLater
-});
+var menuItemId = browser.contextMenus.create({
+        id: "save-link",
+        title: "Save link",
+        contexts: [
+            "link",
+            "page",
+            "tab"
+        ],
+        onclick: saveLink,
+    },
+    console.log
+);
