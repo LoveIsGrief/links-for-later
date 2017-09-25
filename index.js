@@ -8,28 +8,108 @@
 
 var storage = browser.storage.local;
 
-//Get the title of a link and save it
-function saveLink({srcUrl, pageUrl}) {
-    var link = srcUrl || pageUrl;
-    var linkStore = {};
-    linkStore[link] = link;
-    storage.set(linkStore).then(()=>{
-        updateBadge();
+/**
+ * Taken from https://stackoverflow.com/questions/15532791/getting-around-x-frame-options-deny-in-a-chrome-extension
+ * @param url
+ */
+function allowCORS(url) {
+    let listener = function (info) {
+        var headers = info.responseHeaders;
+        for (var i = headers.length - 1; i >= 0; --i) {
+            var header = headers[i].name.toLowerCase();
+            if (header === 'x-frame-options'
+                || header === 'frame-options'
+                || header === 'x-xss-protection'
+            ) {
+                headers.splice(i, 1); // Remove header
+            }
+        }
+
+        headers.push({
+            name: "Access-Control-Allow-Origin",
+            value: "*"
+        })
+        return {responseHeaders: headers};
+    };
+    browser.webRequest.onHeadersReceived.addListener(
+        listener,
+        {
+            urls: [url],
+            types: ['sub_frame']
+        },
+        ['blocking', 'responseHeaders']
+    );
+
+    return listener;
+}
+
+/**
+ * Gets the window title of an url
+ *
+ * Make an AJAX request to build the DOM and get the title that way.
+ * Forced to do this because "page-worker.Page" doesn't exist anymore.
+ * Love it.
+ *
+ * @param url
+ * @returns {Promise}
+ */
+function getTitle(url) {
+    return new Promise((accept, reject) => {
+        // Make sure we can request any damn thing we want
+        var listener = allowCORS(url);
+        var timeoutId = setTimeout(() => {
+            reject();
+        }, 5000);
+
+        function _finalize() {
+            if (listener) {
+                browser.webRequest.onHeadersReceived.removeListener(listener);
+            }
+            clearTimeout(timeoutId);
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.responseType = "document";
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    try {
+                        var doc = xhr.responseXML;
+                        if (doc) {
+                            accept(doc.title)
+                        } else {
+                            reject();
+                        }
+                    } catch (anything) {
+                        reject();
+                    }
+                } else {
+                    _finalize();
+                    reject()
+                }
+            }
+        }
+        xhr.open("GET", url);
+        xhr.send();
     });
-    // TODO get page title
-    // var page = Page({
-    //     contentScriptFile: "./scripts/getTitle.js",
-    //     contentURL: link
-    // });
-    // page.port.on("title", function (title) {
-    //     console.log("caching title ", title, "for", link);
-    //     storage.links[link] = title;
-    //     page.contentURL = "about:blank";
-    //     updateBadge();
-    // });
-    // page.port.on("destroy", function () {
-    //     page.destroy();
-    // });
+}
+
+/**
+ * Params are from https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/menus/OnClickData
+ */
+function saveLink({srcUrl, linkUrl, pageUrl}, tab) {
+    var link = srcUrl || linkUrl || pageUrl;
+
+    function doSave(title) {
+        title = title || link;
+        var linkStore = {};
+        linkStore[link] = title;
+        storage.set(linkStore).then(() => {
+            updateBadge();
+        });
+    }
+
+    getTitle(link).then(doSave, doSave);
 }
 
 
