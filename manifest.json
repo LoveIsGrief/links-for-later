@@ -3,13 +3,12 @@
   "name": "Links for later",
   "version": "1.0.0",
   "description": "Save links that you want to look at for later.",
-  "main": "index.js",
   "author": "LoveIsGrief",
-  "keywords": [
-    "webextension",
-    "save for later",
-    "pocket"
-  ],
+  "applications": {
+    "gecko": {
+      "id": "@links-for-later"
+    }
+  },
   "icons": {
     "48": "data/icon-48.png"
   },
