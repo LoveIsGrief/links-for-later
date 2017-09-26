@@ -10,7 +10,7 @@
     }
   },
   "icons": {
-    "48": "data/icon-48.png"
+    "64": "data/icon-64.png"
   },
   "browser_action": {
     "browser_style": true,
