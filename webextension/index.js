@@ -1,9 +1,6 @@
 /*
  * An addon to save links to look at later.
  * This should help get rid of useless tabs we don't open or click on
- *
- * Hint: If we wanna hava a context-menu for tabs, we need to use the `viewFor` function
- * which tabs have.
  */
 
 var storage = browser.storage.local;
