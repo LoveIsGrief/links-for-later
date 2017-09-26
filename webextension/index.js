@@ -130,8 +130,6 @@ function predicate(context) {
     return true
 }
 
-updateBadge();
-
 var menuItemId = browser.contextMenus.create({
         id: "save-link",
         title: "Save link",
@@ -144,3 +142,19 @@ var menuItemId = browser.contextMenus.create({
     },
     console.log
 );
+
+// Temporary migration step
+// TODO remove this before FF 57 is released
+storage.get().then((results) => {
+    if (Object.keys(results).length === 0) {
+        browser.runtime.sendMessage("import-legacy-data")
+            .then((reply) => {
+                if (reply) {
+                    storage.set(reply)
+                }
+                updateBadge();
+            })
+    } else {
+        updateBadge();
+    }
+})

@@ -10,7 +10,6 @@ var storage = browser.storage.local;
 function createOnClick($node) {
     return function () {
         var url = $node.data("url");
-        console.log("opening", url);
         storage.remove(url).then(() => {
             $node.remove();
             updateBadge();
@@ -69,7 +68,6 @@ function linksToUrlObjects(storageLinks) {
             title: storageLinks[link] || link
         });
     }
-    console.log("got urlObjects", urlObjects);
     return urlObjects
 }
 

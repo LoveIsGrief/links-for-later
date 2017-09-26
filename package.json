@@ -1,0 +1,21 @@
+{
+  "title": "Links for later",
+  "name": "links-for-later",
+  "version": "1.0.2",
+  "description": "Save links that you want to look at for later.",
+  "hasEmbeddedWebExtension": true,
+  "main": "main.js",
+  "author": "LoveIsGrief",
+  "license": "MIT",
+  "keywords": [
+    "jetpack"
+  ],
+  "icons": "webextension/data/icon-64.png",
+  "devDependencies": {
+    "jpm": "^1.2.2"
+  },
+  "scripts": {
+    "start": "node_modules/.bin/jpm run",
+    "start persistent": "mkdir -p .tmp/profile ; node_modules/.bin/jpm run --profile .tmp/profile --no-copy"
+  }
+}
