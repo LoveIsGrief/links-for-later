@@ -41,7 +41,46 @@ function allowCORS(url) {
 }
 
 /**
- * Gets the window title of an url
+ * Helps favor .ico urls over .png or whatever
+ * To be used when sorting an array of favicon url
+ *
+ * @param url
+ * @returns {number}
+ */
+function favIconValue(url) {
+    return url.endsWith("ico") ? 1 : 0
+}
+
+/**
+ *
+ * @param _document {HTMLDocument}
+ * @returns {*}
+ */
+function getFaviconUrl(_document) {
+    var iconUrl = null;
+    var heads = _document.getElementsByTagName("head");
+    if (heads.length < 1) {
+        return iconUrl
+    }
+    var icons = Array.from(heads[0].childNodes)
+    // Try and get urls from elements that seem to contain a favicon
+        .map(header => {
+            if (header.rel && header.rel.indexOf('icon') >= 0) {
+                return header.href
+            }
+        })
+        // Only allow real URLs
+        .filter(url => url && new URL(url))
+        // Prefer .ico
+        .sort((left, right) => favIconValue(right) - favIconValue(left));
+    if (icons.length > 0) {
+        iconUrl = icons[0];
+    }
+    return iconUrl;
+}
+
+/**
+ * Information like the title and favicon
  *
  * Make an AJAX request to build the DOM and get the title that way.
  * Forced to do this because "page-worker.Page" doesn't exist anymore.
@@ -50,7 +89,7 @@ function allowCORS(url) {
  * @param url
  * @returns {Promise}
  */
-function getTitle(url) {
+function getInformation(url) {
     return new Promise((accept, reject) => {
         // Make sure we can request any damn thing we want
         var listener = allowCORS(url);
@@ -71,9 +110,13 @@ function getTitle(url) {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 if (xhr.status === 200) {
                     try {
-                        var doc = xhr.responseXML;
-                        if (doc) {
-                            accept(doc.title)
+                        var _document = xhr.responseXML;
+                        if (_document) {
+                            var iconUrl = getFaviconUrl(_document);
+                            accept({
+                                title: _document.title,
+                                favicon: iconUrl
+                            })
                         } else {
                             reject();
                         }
@@ -94,19 +137,29 @@ function getTitle(url) {
 /**
  * Params are from https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/menus/OnClickData
  */
-function saveLink({srcUrl, linkUrl, pageUrl}, tab) {
+function saveLink({srcUrl, linkUrl, pageUrl}) {
     var link = srcUrl || linkUrl || pageUrl;
 
-    function doSave(title) {
-        title = title || link;
+    /**
+     *
+     * @param information {Object}
+     * @param information.favicon {String=}
+     * @param information.title {String=}
+     * @returns {Promise<TResult>|*}
+     */
+    function doSave(information) {
+        information = information || {
+            favicon: "",
+            title: link,
+        };
         var linkStore = {};
-        linkStore[link] = title;
-        storage.set(linkStore).then(() => {
+        linkStore[link] = information;
+        return storage.set(linkStore).then(() => {
             updateBadge();
         });
     }
 
-    getTitle(link).then(doSave, doSave);
+    return getInformation(link).then(doSave, doSave);
 }
 
 
