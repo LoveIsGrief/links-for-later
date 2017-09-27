@@ -200,11 +200,19 @@ storage.get().then((results) => {
         browser.runtime.sendMessage("import-legacy-data")
             .then((reply) => {
                 if (reply) {
-                    storage.set(reply)
+                    for (let key in reply) {
+                        saveLink({srcUrl: key})
+                    }
                 }
                 updateBadge();
             })
     } else {
+        // Migrate from 1.0.0
+        for (let url in results) {
+            if (typeof results[url] !== "object") {
+                saveLink({srcUrl: url})
+            }
+        }
         updateBadge();
     }
 })
