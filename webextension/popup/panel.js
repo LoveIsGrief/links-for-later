@@ -8,16 +8,34 @@ var storage = browser.storage.local;
  * @returns {Function}
  */
 function createOnClick($node) {
-    return function () {
+    return function (event) {
         var url = $node.data("url");
-        storage.remove(url).then(() => {
-            $node.remove();
-            updateBadge();
+        var promise;
+        // Ctrl click won't remove the node
+        if (event.ctrlKey) {
+            promise = new Promise(accept => accept());
+        } else {
+            promise = storage.remove(url).then(() => {
+                $node.remove();
+                updateNotice();
+                updateBadge();
+            });
+        }
+        promise.then(() => {
             browser.tabs.create({
-                active: false,
+                active: event.ctrlKey,
                 url: url
             });
         });
+    }
+}
+
+function updateNotice() {
+    var $notice = $("#notice")
+    if ($(".link").length > 0) {
+        $notice.text("Hold Ctrl to keep in list after opening");
+    } else {
+        $notice.text("Add some links :)");
     }
 }
 
@@ -30,8 +48,11 @@ function createOnClick($node) {
  */
 function buildPanelItems(linkObjects) {
     var body = $("body");
+    var $notice = $("<span>", {id: "notice"});
+    body.append($notice);
     for (let url of linkObjects) {
         var p = $("<p>", {
+            class: "link",
             data: {
                 url: url.href
             }
@@ -50,6 +71,7 @@ function buildPanelItems(linkObjects) {
         p.append(img, span);
         body.append(p);
     }
+    updateNotice();
     updateBadge();
 }
 
