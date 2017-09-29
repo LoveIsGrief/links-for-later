@@ -1,7 +1,7 @@
 {
   "title": "Links for later",
   "name": "links-for-later",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Save links that you want to look at for later.",
   "hasEmbeddedWebExtension": true,
   "main": "main.js",
