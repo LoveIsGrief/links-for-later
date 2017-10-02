@@ -12,8 +12,12 @@ function createOnClick($node) {
         var url = $node.data("url");
         var promise;
         // Ctrl click won't remove the node
-        if (event.ctrlKey) {
+        if (event.button === 1) {
             promise = new Promise(accept => accept());
+        } else if (event.button === 2) {
+            event.stopPropagation();
+            event.preventDefault();
+            event.preventBubble();
         } else {
             promise = storage.remove(url).then(() => {
                 $node.remove();
@@ -97,6 +101,12 @@ function linksToUrlObjects(storageLinks) {
 storage.get().then((links) => {
     var body = $("body");
     body.empty();
+    $(document).on("click", (event) => {
+        if (event.button === 2) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    });
     buildPanelItems(linksToUrlObjects(links))
 })
 
