@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Links for later",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Save links that you want to look at for later.",
   "author": "LoveIsGrief",
   "applications": {
@@ -26,9 +26,9 @@
   },
   "permissions": [
     "<all_urls>",
+    "activeTab",
     "contextMenus",
     "storage",
-    "webRequest",
-    "webRequestBlocking"
+    "tabs"
   ]
 }

@@ -6,80 +6,6 @@
 var storage = browser.storage.local;
 
 /**
- * Taken from https://stackoverflow.com/questions/15532791/getting-around-x-frame-options-deny-in-a-chrome-extension
- * @param url
- */
-function allowCORS(url) {
-    let listener = function (info) {
-        var headers = info.responseHeaders;
-        for (var i = headers.length - 1; i >= 0; --i) {
-            var header = headers[i].name.toLowerCase();
-            if (header === 'x-frame-options'
-                || header === 'frame-options'
-                || header === 'x-xss-protection'
-            ) {
-                headers.splice(i, 1); // Remove header
-            }
-        }
-
-        headers.push({
-            name: "Access-Control-Allow-Origin",
-            value: "*"
-        })
-        return {responseHeaders: headers};
-    };
-    browser.webRequest.onHeadersReceived.addListener(
-        listener,
-        {
-            urls: [url],
-            types: ['sub_frame']
-        },
-        ['blocking', 'responseHeaders']
-    );
-
-    return listener;
-}
-
-/**
- * Helps favor .ico urls over .png or whatever
- * To be used when sorting an array of favicon url
- *
- * @param url
- * @returns {number}
- */
-function favIconValue(url) {
-    return url.endsWith("ico") ? 1 : 0
-}
-
-/**
- *
- * @param _document {HTMLDocument}
- * @returns {*}
- */
-function getFaviconUrl(_document) {
-    var iconUrl = null;
-    var heads = _document.getElementsByTagName("head");
-    if (heads.length < 1) {
-        return iconUrl
-    }
-    var icons = Array.from(heads[0].childNodes)
-    // Try and get urls from elements that seem to contain a favicon
-        .map(header => {
-            if (header.rel && header.rel.indexOf('icon') >= 0) {
-                return header.href
-            }
-        })
-        // Only allow real URLs
-        .filter(url => url && new URL(url))
-        // Prefer .ico
-        .sort((left, right) => favIconValue(right) - favIconValue(left));
-    if (icons.length > 0) {
-        iconUrl = icons[0];
-    }
-    return iconUrl;
-}
-
-/**
  * Information like the title and favicon
  *
  * Make an AJAX request to build the DOM and get the title that way.
@@ -91,46 +17,47 @@ function getFaviconUrl(_document) {
  */
 function getInformation(url) {
     return new Promise((accept, reject) => {
-        // Make sure we can request any damn thing we want
-        var listener = allowCORS(url);
         var timeoutId = setTimeout(() => {
+            _finalize();
             reject();
         }, 5000);
+        var windowId;
 
         function _finalize() {
-            if (listener) {
-                browser.webRequest.onHeadersReceived.removeListener(listener);
-            }
             clearTimeout(timeoutId);
+            if (windowId) {
+                browser.windows.remove(windowId);
+            }
         }
 
-        var xhr = new XMLHttpRequest();
-        xhr.responseType = "document";
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
-                    try {
-                        var _document = xhr.responseXML;
-                        if (_document) {
-                            var iconUrl = getFaviconUrl(_document);
-                            accept({
-                                title: _document.title,
-                                favicon: iconUrl
-                            })
-                        } else {
-                            reject();
-                        }
-                    } catch (anything) {
-                        reject();
-                    }
-                } else {
-                    _finalize();
-                    reject()
-                }
-            }
+        function onInformation([message]) {
+            _finalize();
+            accept(message);
         }
-        xhr.open("GET", url);
-        xhr.send();
+
+        function onError(error) {
+            _finalize();
+            console.error(error);
+            reject();
+        }
+
+        browser.windows.create({
+            incognito: true,
+            url: url,
+            state: "minimized",
+            type: "detached_panel"
+        }).then((window) => {
+            windowId = window.id;
+            let windowTab = window.tabs[0];
+
+            // Work around for https://bugzilla.mozilla.org/show_bug.cgi?id=1397667
+            setTimeout(() => {
+                browser.tabs.executeScript(windowTab.id, {
+                    file: "content-scripts/getInformation.js"
+                }).then(onInformation).catch(onError);
+            }, 500);
+
+        }).catch(onError)
     });
 }
 
