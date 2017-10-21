@@ -49,6 +49,7 @@ function updateNotice() {
  * @param {String} linkObjects.href
  * @param {String} linkObjects.domain
  * @param {String} linkObjects.title
+ * @param {String} linkObjects.favicon
  */
 function buildPanelItems(linkObjects) {
     var body = $("body");
@@ -63,7 +64,7 @@ function buildPanelItems(linkObjects) {
         });
         p.on("click", createOnClick(p));
         var img = $("<img>", {
-            src: "https://www.google.com/s2/favicons?domain=" + url.domain,
+            src: url.favicon,
             width: 16,
             height: 16
         });
@@ -87,12 +88,11 @@ function buildPanelItems(linkObjects) {
 function linksToUrlObjects(storageLinks) {
     var urlObjects = [];
     for (let link in storageLinks) {
-        urlObjects.push({
+        let linkInformation = storageLinks[link];
+        urlObjects.push(Object.assign({
             href: link,
-            domain: (new URL(link)).hostname,
-            // title: storage.urlObjects[link] || link
-            title: storageLinks[link] || link
-        });
+            domain: (new URL(link)).hostname
+        }, linkInformation));
     }
     return urlObjects
 }
