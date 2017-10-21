@@ -1,0 +1,34 @@
+{
+  "manifest_version": 2,
+  "name": "Links for later",
+  "version": "1.2.0",
+  "description": "Save links that you want to look at for later.",
+  "author": "LoveIsGrief",
+  "applications": {
+    "gecko": {
+      "id": "@links-for-later"
+    }
+  },
+  "icons": {
+    "64": "data/icon-64.png"
+  },
+  "browser_action": {
+    "browser_style": true,
+    "default_icon": "data/icon-64.png",
+    "default_popup": "popup/panel.html",
+    "default_title": "Save link for later"
+  },
+  "background": {
+    "scripts": [
+      "lib/common.js",
+      "index.js"
+    ]
+  },
+  "permissions": [
+    "<all_urls>",
+    "activeTab",
+    "contextMenus",
+    "storage",
+    "tabs"
+  ]
+}

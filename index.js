@@ -1,114 +1,95 @@
 /*
  * An addon to save links to look at later.
  * This should help get rid of useless tabs we don't open or click on
- *
- * Hint: If we wanna hava a context-menu for tabs, we need to use the `viewFor` function
- * which tabs have.
  */
 
-var contextMenu = require("sdk/context-menu");
-var buttons = require('sdk/ui/button/toggle');
-var Page = require("sdk/page-worker").Page;
-var panels = require("sdk/panel");
-var self = require("sdk/self");
-var storage = require("sdk/simple-storage").storage;
-var tabs = require("sdk/tabs");
-var urls = require("sdk/url");
+var storage = browser.storage.local;
 
-// Init storage if necessary
-if (!storage.links) {
-    storage.links = {};
-}
+/**
+ * Information like the title and favicon
+ *
+ * Make an AJAX request to build the DOM and get the title that way.
+ * Forced to do this because "page-worker.Page" doesn't exist anymore.
+ * Love it.
+ *
+ * @param url
+ * @returns {Promise}
+ */
+function getInformation(url) {
+    return new Promise((accept, reject) => {
+        var timeoutId = setTimeout(() => {
+            _finalize();
+            reject();
+        }, 5000);
+        var windowId;
 
-//Get the title of a link and save it
-function saveLink(link) {
-    var page = Page({
-        contentScriptFile: "./scripts/getTitle.js",
-        contentURL: link
-    });
-    page.port.on("title", function (title) {
-        console.log("caching title ", title, "for", link);
-        storage.links[link] = title;
-        page.contentURL = "about:blank";
-        updateBadge();
-    });
-    page.port.on("destroy", function () {
-        page.destroy();
-    });
-}
+        function _finalize() {
+            clearTimeout(timeoutId);
+            if (windowId) {
+                browser.windows.remove(windowId);
+            }
+        }
 
-// Migrate from old links which were in an array
-// For some reason `instanceof Array` doesn't yield true
-if (storage.links.length !== undefined) {
-    console.log("migrating links");
-    // Make a copy before processing it
-    var temp = storage.links.map((link) => link);
-    storage.links = {};
-    temp.forEach(saveLink);
+        function onInformation([message]) {
+            _finalize();
+            accept(message);
+        }
+
+        function onError(error) {
+            _finalize();
+            console.error(error);
+            reject();
+        }
+
+        browser.windows.create({
+            incognito: true,
+            url: url,
+            state: "minimized",
+            type: "detached_panel"
+        }).then((window) => {
+            windowId = window.id;
+            let windowTab = window.tabs[0];
+
+            // Work around for https://bugzilla.mozilla.org/show_bug.cgi?id=1397667
+            setTimeout(() => {
+                browser.tabs.executeScript(windowTab.id, {
+                    file: "content-scripts/getInformation.js"
+                }).then(onInformation).catch(onError);
+            }, 500);
+
+        }).catch(onError)
+    });
 }
 
 /**
- * Makes sure the badge shows how many links we've saved
+ * Params are from https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/menus/OnClickData
  */
-function updateBadge() {
-    button.badge = Object.keys(storage.links).length || "";
-}
+function saveLink({srcUrl, linkUrl, pageUrl}) {
+    var link = srcUrl || linkUrl || pageUrl;
 
-function handleHide() {
-    button.state("window", {checked: false});
-}
-
-function getLinks() {
-    var links = [];
-    for (let link in storage.links) {
-        links.push({
-            href: link,
-            domain: urls.URL(link).host,
-            title: storage.links[link] || link
+    /**
+     *
+     * @param information {Object}
+     * @param information.favicon {String=}
+     * @param information.title {String=}
+     * @returns {Promise<TResult>|*}
+     */
+    function doSave(information) {
+        information = information || {
+            favicon: "",
+            title: link,
+        };
+        var linkStore = {};
+        linkStore[link] = information;
+        return storage.set(linkStore).then(() => {
+            updateBadge();
         });
     }
-    console.log("got links", links);
-    return links;
+
+    return getInformation(link).then(doSave, doSave);
 }
 
-var panel = panels.Panel({
-    contentURL: "./html/panel.html",
-    contentScriptFile: [
-        "./scripts/jquery.min.js",
-        "./scripts/panel.js"
-    ],
-    onHide: handleHide
-});
 
-panel.port.on("openLink", function (url) {
-    console.log("opening", url);
-    delete storage.links[url];
-    updateBadge();
-    tabs.open(url);
-});
-
-var button = buttons.ToggleButton({
-    id: "mozilla-link",
-    label: "Links for later",
-    icon: {
-        "16": "./icon-16.png",
-        "32": "./icon-32.png",
-        "64": "./icon-64.png"
-    },
-    onChange: handleOnChange
-});
-updateBadge();
-
-function handleOnChange(state) {
-    if (state.checked) {
-        panel.port.emit("show", getLinks());
-        panel.show({
-            position: button,
-        });
-    }
-}
-
-var menuItem;
 /**
  * Depending on the type of item clicked, we should change the title
  *
@@ -126,20 +107,39 @@ function predicate(context) {
     return true
 }
 
-/**
- *
- * @param url {String}
- */
-function saveLinkForLater(url) {
-    if (storage.links[url] === undefined) {
-        saveLink(url);
-    }
-}
+var menuItemId = browser.contextMenus.create({
+        id: "save-link",
+        title: "Save link",
+        contexts: [
+            "link",
+            "page",
+            "tab"
+        ],
+        onclick: saveLink,
+    },
+    console.log
+);
 
-menuItem = contextMenu.Item({
-    label: "Watch link later",
-    context: contextMenu.PredicateContext(predicate),
-    contentScriptFile: "./scripts/menuItemClick.js",
-    image: self.data.url("icon-16.png"),
-    onMessage: saveLinkForLater
-});
+// Temporary migration step
+// TODO remove this before FF 57 is released
+storage.get().then((results) => {
+    if (Object.keys(results).length === 0) {
+        browser.runtime.sendMessage("import-legacy-data")
+            .then((reply) => {
+                if (reply) {
+                    for (let key in reply) {
+                        saveLink({srcUrl: key})
+                    }
+                }
+                updateBadge();
+            })
+    } else {
+        // Migrate from 1.0.0
+        for (let url in results) {
+            if (typeof results[url] !== "object") {
+                saveLink({srcUrl: url})
+            }
+        }
+        updateBadge();
+    }
+})

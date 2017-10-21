@@ -39,6 +39,7 @@ jspm_packages
 # Firefox stuff
 *.xpi
 .tmp
+web-ext-artifacts/
 
 # PyCharm stuff
 .idea
