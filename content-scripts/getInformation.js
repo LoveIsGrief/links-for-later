@@ -1,4 +1,19 @@
 /**
+ * Attempt to get information about the page like title and favicon.
+ * We loop for a max amount of time trying to get that sweet, sweet information.
+ */
+
+/**
+ * How long we'll wait for this script to get information about the page
+ *
+ * in milliseconds
+ *
+ * TODO pass this as a param
+ * @type {number}
+ */
+const MAX_WAIT_TIME = 3500;
+
+/**
  * Helps favor .ico urls over .png or whatever
  * To be used when sorting an array of favicon url
  *
@@ -33,8 +48,24 @@ function getFaviconUrl() {
     return iconUrl;
 }
 
-var ret = {
-    title: document.title,
-    favicon: getFaviconUrl()
-};
-ret
+let port = browser.runtime.connect();
+let startMs = Date.now();
+
+// The wait loop
+let interval = setInterval(() => {
+    let message = {
+        title: document.title,
+        favicon: getFaviconUrl()
+    };
+    let elapsed = Date.now() - startMs;
+    if (elapsed <= MAX_WAIT_TIME) {
+        // Check if we have all the info we want
+        for (let key in message) {
+            if (!message[key]) {
+                return
+            }
+        }
+    }
+    clearInterval(interval);
+    port.postMessage(message);
+}, 100)

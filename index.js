@@ -30,7 +30,7 @@ function getInformation(url) {
             }
         }
 
-        function onInformation([message]) {
+        function onInformation(message) {
             _finalize();
             accept(message);
         }
@@ -51,10 +51,25 @@ function getInformation(url) {
             let windowTab = window.tabs[0];
 
             // Work around for https://bugzilla.mozilla.org/show_bug.cgi?id=1397667
+            // absolutely balls that the object tab isn't accessible yet >_>
             setTimeout(() => {
+
+                // low-key mute the tab
+                browser.tabs.update(windowTab.id,{ muted: true})
+
+                // Wait for async response from getInformation.js
+                function onConnect(port) {
+                    if(port.sender.tab.id !== windowTab.id){
+                        return
+                    }
+                    console.log("waiting for information");
+                    port.onMessage.addListener(onInformation);
+                    browser.runtime.onConnect.removeListener(this);
+                }
+                browser.runtime.onConnect.addListener(onConnect);
                 browser.tabs.executeScript(windowTab.id, {
                     file: "content-scripts/getInformation.js"
-                }).then(onInformation).catch(onError);
+                }).catch(onError);
             }, 500);
 
         }).catch(onError)
