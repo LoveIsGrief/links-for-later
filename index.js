@@ -8,9 +8,9 @@ var storage = browser.storage.local;
 /**
  * Information like the title and favicon
  *
- * Make an AJAX request to build the DOM and get the title that way.
+ * Create a new inactive tab with the URL in order to compile information about it.
  * Forced to do this because "page-worker.Page" doesn't exist anymore.
- * Love it.
+ * Love it...
  *
  * @param url
  * @returns {Promise}
@@ -21,12 +21,16 @@ function getInformation(url) {
             _finalize();
             reject();
         }, 5000);
-        var windowId;
+        let tabId;
+        let contextId;
 
         function _finalize() {
             clearTimeout(timeoutId);
-            if (windowId) {
-                browser.windows.remove(windowId);
+            if (tabId) {
+                browser.tabs.remove(tabId);
+            }
+            if (contextId) {
+                browser.contextualIdentities.remove(contextId);
             }
         }
 
@@ -37,42 +41,46 @@ function getInformation(url) {
 
         function onError(error) {
             _finalize();
-            console.error(error);
+            console.error("getInformationError:", error);
             reject();
         }
 
-        browser.windows.create({
-            incognito: true,
-            url: url,
-            state: "minimized",
-            type: "detached_panel"
-        }).then((window) => {
-            windowId = window.id;
-            let windowTab = window.tabs[0];
+        // Use a temporary context for the tab
+        browser.contextualIdentities.create({
+            name: "tmp_links_for_later",
+            color: "pink",
+            icon: "fingerprint"
+        }).then((context) => {
+            contextId = context.id;
+            browser.tabs.create({
+                url: url,
+                active: false,
+                cookieStoreId: context.cookieStoreId
+            }).then((tab) => {
+                tabId = tab.id;
+                // Work around for https://bugzilla.mozilla.org/show_bug.cgi?id=1397667
+                // absolutely balls that the object tab isn't accessible yet >_>
+                setTimeout(() => {
+                    // low-key mute the tab
+                    browser.tabs.update(tab.id,{ muted: true})
 
-            // Work around for https://bugzilla.mozilla.org/show_bug.cgi?id=1397667
-            // absolutely balls that the object tab isn't accessible yet >_>
-            setTimeout(() => {
-
-                // low-key mute the tab
-                browser.tabs.update(windowTab.id,{ muted: true})
-
-                // Wait for async response from getInformation.js
-                function onConnect(port) {
-                    if(port.sender.tab.id !== windowTab.id){
-                        return
+                    // Wait for async response from getInformation.js
+                    function onConnect(port) {
+                        if(port.sender.tab.id !== tab.id){
+                            return
+                        }
+                        port.onMessage.addListener(onInformation);
+                        browser.runtime.onConnect.removeListener(this);
                     }
-                    console.log("waiting for information");
-                    port.onMessage.addListener(onInformation);
-                    browser.runtime.onConnect.removeListener(this);
-                }
-                browser.runtime.onConnect.addListener(onConnect);
-                browser.tabs.executeScript(windowTab.id, {
-                    file: "content-scripts/getInformation.js"
-                }).catch(onError);
-            }, 500);
+                    browser.runtime.onConnect.addListener(onConnect);
+                    browser.tabs.executeScript(tab.id, {
+                        file: "content-scripts/getInformation.js"
+                    }).catch(onError);
+                }, 500);
 
-        }).catch(onError)
+            }).catch(onError)
+        }).catch(onError);
+
     });
 }
 
