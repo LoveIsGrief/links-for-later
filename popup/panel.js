@@ -30,12 +30,25 @@ function linksToUrlObjects(storageLinks) {
 angular.module("PanelApp", []).controller("PanelController", function ($scope) {
     $scope.links = [];
     $scope.searchText = '';
+    this.searchRegex = new RegExp('');
+
+    $scope.$watch('searchText', (search) => {
+        this.searchRegex = new RegExp(search.split("").join(".*"), 'i');
+    })
 
     storage.get().then((links) => {
         $scope.$apply(() => {
             $scope.links = linksToUrlObjects(links);
         })
     })
+
+    /**
+     * @param link {LinkObject}
+     * @returns {boolean}
+     */
+    $scope.searchFuzzily = (link) => {
+        return this.searchRegex.test(link.href) || this.searchRegex.test(link.title)
+    }
 
     $scope.notice = function () {
         return $scope.links.length ? "Hold Ctrl to keep in list after opening" : "Add links to get started :)"

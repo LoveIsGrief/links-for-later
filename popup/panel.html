@@ -13,7 +13,7 @@
 <span id="notice">{{ notice() }}</span>
 <input id="filter" type="text" ng-model="searchText">
 <ul>
-    <li ng-repeat="link in links | filter:searchText"
+    <li ng-repeat="link in links | filter:searchFuzzily"
         class="link"
         title="{{link.title}}"
     >
