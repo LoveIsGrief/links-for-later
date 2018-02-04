@@ -50,27 +50,31 @@ function updateNotice() {
 function buildPanelItems(linkObjects) {
     var body = $("body");
     var $notice = $("<span>", {id: "notice"});
-    body.append($notice);
+    let $ul = $("<ul>");
+    let $filter = $(`<input type="text" id="filter">`);
+    $filter.filterList();
+
+    body.append($notice, $filter, $ul);
+
     for (let url of linkObjects) {
-        var p = $("<p>", {
+        var $li = $("<li>", {
             class: "link",
+            title: url.title,
             data: {
-                url: url.href
+                url: url.href,
+                favicon: url.favicon
             }
         });
-        p.on("click", createOnClick(p));
+        $li.attr("data-favicon", url.favicon);
+        $li.text(url.title);
+        $li.on("click", createOnClick($li));
         var img = $("<img>", {
             src: url.favicon,
             width: 16,
             height: 16
         });
-        var span = $("<span>", {
-            href: url.href,
-            html: url.title
-        });
-
-        p.append(img, span);
-        body.append(p);
+        $li.prepend(img);
+        $ul.append($li);
     }
     updateNotice();
     updateBadge();
