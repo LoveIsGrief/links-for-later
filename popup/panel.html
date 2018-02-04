@@ -1,18 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="PanelApp">
 
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="panel.css">
-
-    <script src="jquery.min.js" type="application/javascript"></script>
-    <script src="jquery.filterList.min.js" type="application/javascript"></script>
+    <script src="angular.min.js" type="application/javascript"></script>
     <script src="../lib/common.js" type="application/javascript"></script>
     <script src="panel.js" type="application/javascript"></script>
 </head>
 
-<body>
-<p>Loading...</p>
+<body ng-controller="PanelController">
+<span id="notice">{{ notice() }}</span>
+<input id="filter" type="text" ng-model="searchText">
+<ul>
+    <li ng-repeat="link in links | filter:searchText"
+        class="link"
+        title="{{link.title}}"
+    >
+        <img ng-src="{{link.favicon}}" alt="O">
+        <span class="text" ng-click="onSelectLink($event, link)">
+            {{ link.title }}
+        </span>
+        <span class="remove" ng-click="removeLink(link)" >X</span>
+    </li>
+</ul>
+<p ng-hide="links.length">Loading...</p>
 </body>
 </html>
 

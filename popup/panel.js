@@ -1,84 +1,13 @@
-var storage = browser.storage.local;
-
-
-/**
- * Opens the url of the panel item in a background tab.
- *
- * @param $node
- * @returns {Function}
- */
-function createOnClick($node) {
-    return function (event) {
-        var url = $node.data("url");
-        var promise;
-        // Ctrl click won't remove the node
-        if (event.ctrlKey) {
-            promise = new Promise(accept => accept());
-        } else {
-            promise = storage.remove(url).then(() => {
-                $node.remove();
-                updateNotice();
-                updateBadge();
-            });
-        }
-        promise.then(() => {
-            browser.tabs.create({
-                active: event.ctrlKey,
-                url: url
-            });
-        });
-    }
-}
-
-function updateNotice() {
-    var $notice = $("#notice")
-    if ($(".link").length > 0) {
-        $notice.text("Hold Ctrl to keep in list after opening");
-    } else {
-        $notice.text("Add some links :)");
-    }
-}
+let storage = browser.storage.local;
 
 /**
- *
- * @param {Object[]} linkObjects
- * @param {String} linkObjects.href
- * @param {String} linkObjects.domain
- * @param {String} linkObjects.title
- * @param {String} linkObjects.favicon
+ * @typedef {Object} LinkObject
+ * @field {String} href
+ * @field {String} domain
+ * @field {String} title
+ * @field {String} favicon
+
  */
-function buildPanelItems(linkObjects) {
-    var body = $("body");
-    var $notice = $("<span>", {id: "notice"});
-    let $ul = $("<ul>");
-    let $filter = $(`<input type="text" id="filter">`);
-    $filter.filterList();
-
-    body.append($notice, $filter, $ul);
-
-    for (let url of linkObjects) {
-        var $li = $("<li>", {
-            class: "link",
-            title: url.title,
-            data: {
-                url: url.href,
-                favicon: url.favicon
-            }
-        });
-        $li.attr("data-favicon", url.favicon);
-        $li.text(url.title);
-        $li.on("click", createOnClick($li));
-        var img = $("<img>", {
-            src: url.favicon,
-            width: 16,
-            height: 16
-        });
-        $li.prepend(img);
-        $ul.append($li);
-    }
-    updateNotice();
-    updateBadge();
-}
 
 /**
  *
@@ -86,7 +15,7 @@ function buildPanelItems(linkObjects) {
  * @returns {Array}
  */
 function linksToUrlObjects(storageLinks) {
-    var urlObjects = [];
+    let urlObjects = [];
     for (let link in storageLinks) {
         let linkInformation = storageLinks[link];
         urlObjects.push(Object.assign({
@@ -98,10 +27,62 @@ function linksToUrlObjects(storageLinks) {
 }
 
 
-storage.get().then((links) => {
-    var body = $("body");
-    body.empty();
-    buildPanelItems(linksToUrlObjects(links))
-})
+angular.module("PanelApp", []).controller("PanelController", function ($scope) {
+    $scope.links = [];
+    $scope.searchText = '';
 
+    storage.get().then((links) => {
+        $scope.$apply(() => {
+            $scope.links = linksToUrlObjects(links);
+        })
+    })
 
+    $scope.notice = function () {
+        return $scope.links.length ? "Hold Ctrl to keep in list after opening" : "Add links to get started :)"
+    }
+
+    /**
+     * @param link {LinkObject}
+     * @returns Promise
+     */
+    function removeLink(link) {
+        const index = $scope.links.indexOf(link);
+        return new Promise((accept, reject) => {
+            storage.remove(link.href).then(() => {
+                $scope.$apply(() => {
+                    $scope.links.splice(index, 1);
+                })
+                updateBadge();
+                accept();
+            }).catch(reject);
+        })
+
+    }
+
+    /**
+     * Opens the url of the panel item in a background tab.
+     *
+     * @param event {Event}
+     * @param link {LinkObject}
+     * @param index {Number}
+     * @returns {Function}
+     */
+    $scope.onSelectLink = function (event, link) {
+        const url = link.href;
+        let promise;
+        // Ctrl click won't remove the node
+        if (event.ctrlKey) {
+            promise = new Promise(accept => accept());
+        } else {
+            promise = removeLink(link)
+        }
+        promise.then(() => {
+            browser.tabs.create({
+                active: event.ctrlKey,
+                url: url
+            });
+        });
+    }
+
+    $scope.removeLink = removeLink;
+});
