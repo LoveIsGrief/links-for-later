@@ -7,26 +7,19 @@ for later viewing. Pretty simple. No frills.
 
 # Dev
 
-This is made with [Jetpack](https://developer.mozilla.org/en-US/Add-ons/SDK).
-A simpler way of making extensions for Firefox.
-
-I didn't know about Web Extensions 
-(which supposedly make extensions for Chrome and Firefox), so... yeah.
+This is made with [WebExtensions](https://developer.mozilla.org/en-US/Add-ons/WebExtensions).
 
 ## Requirements
 
- * Node.js
+ * Node.js / NPM
  * Firefox
+ * [web-ext](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/web-ext_command_reference)
 
 ## Getting started
 
 ```bash
-# Install nodes.js deps
-npm install
-# Start a firefox instance with test
-# Each run starts a new instance with a new profile
-npm run start
+# Install web-ext tool to help with development
+npm install -g web-ext
+# Start a new firefox instance with the extension in it
+web-ext run
 ```
-
-`npm run "start persistent"` will create *.tmp/profile* which will keep data across restarts.
-This can help with testing. Just delete the folder if you want to start afresh.
