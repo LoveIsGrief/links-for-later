@@ -1,0 +1,35 @@
+ul {
+    list-style: none;
+    padding-left: 0;
+    overflow-x: hidden;
+    width: 100%;
+}
+
+li {
+    display: flex;
+    justify-content: flex-start;
+    align-content: center;
+    min-height: 18px;
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+li img {
+    margin-right: 5px;
+    height: 16px;
+    width: 16px;
+}
+
+li .text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 10px;
+
+}
+
+li .remove {
+    color: red;
+    font-weight: bold;
+    font-family: "Comic Sans MS";
+}
