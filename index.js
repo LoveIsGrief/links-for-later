@@ -167,3 +167,11 @@ storage.get().then((results) => {
         updateBadge();
     }
 })
+
+// Cleanup for #21
+// TODO remove in next task
+browser.contextualIdentities.query({
+    name: "tmp_links_for_later"
+}).then((identities) => {
+    identities.forEach(identity => browser.contextualIdentities.remove(identity.cookiestoreId))
+});
