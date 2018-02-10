@@ -22,15 +22,16 @@ function getInformation(url) {
             reject();
         }, 5000);
         let tabId;
-        let contextId;
+        let cookiestoreId;
 
         function _finalize() {
             clearTimeout(timeoutId);
             if (tabId) {
                 browser.tabs.remove(tabId);
             }
-            if (contextId) {
-                browser.contextualIdentities.remove(contextId);
+            if (cookiestoreId) {
+                browser.contextualIdentities.remove(cookiestoreId);
+                console.log("removed cookiestore")
             }
         }
 
@@ -51,11 +52,11 @@ function getInformation(url) {
             color: "pink",
             icon: "fingerprint"
         }).then((context) => {
-            contextId = context.id;
+            cookiestoreId = context.cookieStoreId;
             browser.tabs.create({
                 url: url,
                 active: false,
-                cookieStoreId: context.cookieStoreId
+                cookieStoreId: cookiestoreId
             }).then((tab) => {
                 tabId = tab.id;
                 // Work around for https://bugzilla.mozilla.org/show_bug.cgi?id=1397667
@@ -166,3 +167,11 @@ storage.get().then((results) => {
         updateBadge();
     }
 })
+
+// Cleanup for #21
+// TODO remove in next task
+browser.contextualIdentities.query({
+    name: "tmp_links_for_later"
+}).then((identities) => {
+    identities.forEach(identity => browser.contextualIdentities.remove(identity.cookiestoreId))
+});
