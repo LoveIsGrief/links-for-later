@@ -51,7 +51,7 @@ angular.module("PanelApp", []).controller("PanelController", function ($scope) {
     }
 
     $scope.notice = function () {
-        return $scope.links.length ? "Hold Ctrl to keep in list after opening" : "Add links to get started :)"
+        return $scope.links.length ? "Hold Ctrl or middle click to keep in list after opening" : "Add links to get started :)"
     }
 
     /**
