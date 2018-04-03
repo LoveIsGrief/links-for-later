@@ -84,7 +84,7 @@ angular.module("PanelApp", []).controller("PanelController", function ($scope) {
         const url = link.href;
         let promise;
         // Ctrl click won't remove the node
-        if (event.ctrlKey) {
+        if (event.ctrlKey || event.button === 1) {
             promise = new Promise(accept => accept());
         } else {
             promise = removeLink(link)

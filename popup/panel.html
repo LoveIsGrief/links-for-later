@@ -18,7 +18,7 @@
         title="{{link.title}}"
     >
         <img ng-src="{{link.favicon}}" alt="O">
-        <span class="text" ng-click="onSelectLink($event, link)">
+        <span class="text" ng-mouseup="onSelectLink($event, link)">
             {{ link.title }}
         </span>
         <span class="remove" ng-click="removeLink(link)" >X</span>
