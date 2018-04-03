@@ -51,7 +51,7 @@ angular.module("PanelApp", []).controller("PanelController", function ($scope) {
     }
 
     $scope.notice = function () {
-        return $scope.links.length ? "Hold Ctrl to keep in list after opening" : "Add links to get started :)"
+        return $scope.links.length ? "Hold Ctrl or middle click to keep in list after opening" : "Add links to get started :)"
     }
 
     /**
@@ -84,7 +84,7 @@ angular.module("PanelApp", []).controller("PanelController", function ($scope) {
         const url = link.href;
         let promise;
         // Ctrl click won't remove the node
-        if (event.ctrlKey) {
+        if (event.ctrlKey || event.button === 1) {
             promise = new Promise(accept => accept());
         } else {
             promise = removeLink(link)
