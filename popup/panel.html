@@ -9,16 +9,16 @@
     <script src="panel.js" type="application/javascript"></script>
 </head>
 
-<body ng-controller="PanelController">
+<body ng-controller="PanelController" ng-keypress="onKeyPressed($event)">
 <span id="notice">{{ notice() }}</span>
 <input id="filter" type="text" ng-model="searchText" autofocus>
 <ul>
     <li ng-repeat="link in links | filter:searchFuzzily"
-        class="link"
+        ng-class="getLinkClass(link, $index, $first, $last)"
         title="{{link.title}}"
     >
         <img ng-src="{{link.favicon}}" alt="O">
-        <span class="text" ng-mouseup="onSelectLink($event, link)">
+        <span class="text" ng-mouseup="onLinkClicked($event, link)">
             {{ link.title }}
         </span>
         <span class="remove" ng-click="removeLink(link)" >X</span>
