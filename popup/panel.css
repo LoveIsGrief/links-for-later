@@ -14,6 +14,10 @@ li {
     margin-bottom: 3px;
 }
 
+li.active {
+    background: #F6C6CE;
+}
+
 li img {
     margin-right: 5px;
     height: 16px;
