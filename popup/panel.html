@@ -11,9 +11,17 @@
 
 <body ng-controller="PanelController" ng-keypress="onKeyPressed($event)">
 <span id="notice">{{ notice() }}</span>
-<input id="filter" type="text" ng-model="searchText" autofocus>
+<div id="form-container">
+    <input id="filter" type="text" ng-model="searchText" autofocus>
+    <div id="sort-check-container">
+        <input id="reverse-sort" type="checkbox" ng-model="isSortReversed">
+        <label for="reverse-sort"></label>
+    </div>
+
+</div>
+
 <ul>
-    <li ng-repeat="link in links | filter:searchFuzzily"
+    <li ng-repeat="link in links | filter:searchFuzzily | orderBy:'title':isSortReversed"
         ng-class="getLinkClass(link, $index, $first, $last)"
         title="{{link.title}}"
     >
