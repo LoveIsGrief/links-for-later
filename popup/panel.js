@@ -125,7 +125,6 @@ angular.module("PanelApp", []).controller("PanelController", function ($scope) {
         }
     }
     $scope.onKeyPressed = function (event) {
-        console.log(event);
         switch (event.key) {
             case "ArrowUp":
                 $scope.selectedIndex--;
