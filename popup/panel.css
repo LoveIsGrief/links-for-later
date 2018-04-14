@@ -6,6 +6,62 @@ body {
     position: relative;
 }
 
+#form-container {
+    display: flex;
+    align-content: center;
+}
+
+#form-container #filter {
+    flex-grow: 1;
+}
+
+#sort-check-container {
+    margin-left: 10px;
+}
+
+#sort-check-container #reverse-sort {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    visibility: hidden;
+}
+
+#sort-check-container label {
+    font-size: 18px;
+    padding-block-start: 0px;
+    padding-inline-end: 8px;
+    padding-block-end: 0px;
+    padding-inline-start: 8px;
+    border: 2px outset ThreeDLightShadow;
+    background-color: ButtonFace;
+    cursor: default;
+    box-sizing: border-box;
+    -moz-user-select: none;
+    -moz-binding: none;
+    border-radius: 3px;
+}
+
+#sort-check-container label::after {
+    content: 'A-Z';
+}
+
+#sort-check-container label:active,
+#sort-check-container #reverse-sort:checked ~ label {
+    padding-block-start: 0px;
+    padding-inline-end: 7px;
+    padding-block-end: 0px;
+    padding-inline-start: 9px;
+    border-style: inset;
+    background-color: lightblue;
+    color: ButtonText;
+}
+
+#reverse-sort:checked ~ label::after {
+    content: "Z-A"
+}
+
 ul {
     list-style: none;
     padding-left: 0;
