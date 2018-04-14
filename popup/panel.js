@@ -118,14 +118,21 @@ angular.module("PanelApp", []).controller("PanelController", function ($scope) {
     // Track which element is active
     $scope.selectedIndex = -1;
     $scope.activeLink = null;
+    function scrollToSelectedLink(){
+        let $scrollTo = document.querySelector(`#link-${$scope.selectedIndex}`);
+        if($scrollTo){
+            $scrollTo.scrollIntoView();
+        }
+    }
     $scope.onKeyPressed = function (event) {
-        console.log(event);
         switch (event.key) {
             case "ArrowUp":
-                $scope.selectedIndex--
+                $scope.selectedIndex--;
+                scrollToSelectedLink();
                 break
             case "ArrowDown":
-                $scope.selectedIndex++
+                $scope.selectedIndex++;
+                scrollToSelectedLink();
                 break
             case "Enter":
                 if ($scope.activeLink) {

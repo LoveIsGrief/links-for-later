@@ -1,3 +1,11 @@
+body {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 500px;
+    position: relative;
+}
+
 #form-container {
     display: flex;
     align-content: center;
@@ -58,6 +66,7 @@ ul {
     list-style: none;
     padding-left: 0;
     overflow-x: hidden;
+    overflow-y: auto;
     width: 100%;
 }
 
