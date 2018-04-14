@@ -16,6 +16,7 @@
     <li ng-repeat="link in links | filter:searchFuzzily"
         ng-class="getLinkClass(link, $index, $first, $last)"
         title="{{link.title}}"
+        id="link-{{$index}}"
     >
         <img ng-src="{{link.favicon}}" alt="O">
         <span class="text" ng-mouseup="onLinkClicked($event, link)">
