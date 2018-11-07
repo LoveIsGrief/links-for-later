@@ -4,16 +4,6 @@
  */
 
 /**
- * How long we'll wait for this script to get information about the page
- *
- * in milliseconds
- *
- * TODO pass this as a param
- * @type {number}
- */
-const MAX_WAIT_TIME = 3500;
-
-/**
  * Helps favor .ico urls over .png or whatever
  * To be used when sorting an array of favicon url
  *
@@ -49,23 +39,11 @@ function getFaviconUrl() {
 }
 
 let port = browser.runtime.connect();
-let startMs = Date.now();
 
 // The wait loop
-let interval = setInterval(() => {
-    let message = {
+setInterval(() => {
+    port.postMessage({
         title: document.title,
         favicon: getFaviconUrl()
-    };
-    let elapsed = Date.now() - startMs;
-    if (elapsed <= MAX_WAIT_TIME) {
-        // Check if we have all the info we want
-        for (let key in message) {
-            if (!message[key]) {
-                return
-            }
-        }
-    }
-    clearInterval(interval);
-    port.postMessage(message);
+    });
 }, 100)

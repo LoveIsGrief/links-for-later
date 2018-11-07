@@ -17,17 +17,19 @@ var storage = browser.storage.local;
  */
 function getInformation(url) {
     return new Promise((accept, reject) => {
-        var timeoutId = setTimeout(() => {
-            _finalize();
-            reject();
-        }, 5000);
+        // var timeoutId = setTimeout(() => {
+        //     _finalize();
+        //     reject();
+        // }, 5000);
         let tabId;
         let cookiestoreId;
+        let lastMessage;
 
         function _finalize() {
-            clearTimeout(timeoutId);
+            // clearTimeout(timeoutId);
             if (tabId) {
                 browser.tabs.remove(tabId);
+                browser.tabs.onRemoved.removeListener(onRemoved);
             }
             if (cookiestoreId) {
                 browser.contextualIdentities.remove(cookiestoreId);
@@ -36,14 +38,30 @@ function getInformation(url) {
         }
 
         function onInformation(message) {
+            lastMessage = message;
+            for (let key in message) {
+                console.debug("message ", message);
+                if (!message[key]) {
+                    return
+                }
+            }
             _finalize();
-            accept(message);
+            accept(lastMessage);
         }
 
         function onError(error) {
             _finalize();
             console.error("getInformationError:", error);
-            reject();
+            reject(lastMessage);
+        }
+
+        function onRemoved(tab){
+            if(tab.id !== tabId){
+                return
+            }
+            console.debug("tab removed");
+            _finalize();
+            (lastMessage ? accept : reject)(lastMessage)
         }
 
         // Use a temporary context for the tab
@@ -62,20 +80,24 @@ function getInformation(url) {
                 // Work around for https://bugzilla.mozilla.org/show_bug.cgi?id=1397667
                 // absolutely balls that the object tab isn't accessible yet >_>
                 setTimeout(() => {
+                    browser.tabs.onRemoved.addListener(onRemoved);
+
                     // low-key mute the tab
-                    browser.tabs.update(tab.id,{ muted: true})
+                    browser.tabs.update(tab.id, {muted: true})
 
                     // Wait for async response from getInformation.js
                     function onConnect(port) {
-                        if(port.sender.tab.id !== tab.id){
+                        if (port.sender.tab.id !== tab.id) {
                             return
                         }
                         port.onMessage.addListener(onInformation);
-                        browser.runtime.onConnect.removeListener(this);
+                        browser.runtime.onConnect.removeListener(onConnect);
                     }
+
                     browser.runtime.onConnect.addListener(onConnect);
                     browser.tabs.executeScript(tab.id, {
-                        file: "content-scripts/getInformation.js"
+                        file: "content-scripts/getInformation.js",
+                        runAt: "document_start"
                     }).catch(onError);
                 }, 500);
 
