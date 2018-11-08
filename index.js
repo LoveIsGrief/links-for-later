@@ -25,7 +25,7 @@ function getInformation(url) {
             }
             timeoutId = setTimeout(() => {
                 _finalize();
-                reject();
+                reject(lastMessage);
             }, delay * 1000)
         });
         let tabId;
@@ -49,7 +49,6 @@ function getInformation(url) {
         function onInformation(message) {
             lastMessage = message;
             for (let key in message) {
-                console.debug("message ", message);
                 if (!message[key]) {
                     return
                 }
