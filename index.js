@@ -43,7 +43,6 @@ function getInformation(url) {
             }
             if (cookiestoreId) {
                 browser.contextualIdentities.remove(cookiestoreId);
-                console.log("removed cookiestore")
             }
         }
 
@@ -69,7 +68,6 @@ function getInformation(url) {
             if (removedTabId !== tabId) {
                 return
             }
-            console.debug("tab removed");
             _finalize();
             (lastMessage ? accept : reject)(lastMessage)
         }
