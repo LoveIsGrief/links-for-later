@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Links for later",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Save links that you want to look at for later.",
   "author": "LoveIsGrief",
   "applications": {
@@ -23,6 +23,10 @@
       "lib/common.js",
       "index.js"
     ]
+  },
+  "options_ui": {
+    "page": "options/index.html",
+    "browser_style": true
   },
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self';",
   "permissions": [
