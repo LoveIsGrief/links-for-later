@@ -17,16 +17,26 @@ var storage = browser.storage.local;
  */
 function getInformation(url) {
     return new Promise((accept, reject) => {
-        // var timeoutId = setTimeout(() => {
-        //     _finalize();
-        //     reject();
-        // }, 5000);
+        let timeoutId;
+        browser.storage.sync.get("options").then(({options}) => {
+            let delay = Number(options.delay);
+            if (!delay) {
+                return
+            }
+            timeoutId = setTimeout(() => {
+                _finalize();
+                reject();
+            }, delay * 1000)
+        });
         let tabId;
         let cookiestoreId;
         let lastMessage;
 
         function _finalize() {
-            // clearTimeout(timeoutId);
+            if(timeoutId){
+                clearTimeout(timeoutId);
+                timeoutId = null;
+            }
             if (tabId) {
                 browser.tabs.remove(tabId);
                 browser.tabs.onRemoved.removeListener(onRemoved);
@@ -55,8 +65,8 @@ function getInformation(url) {
             reject(lastMessage);
         }
 
-        function onRemoved(tab){
-            if(tab.id !== tabId){
+        function onRemoved(tab) {
+            if (tab.id !== tabId) {
                 return
             }
             console.debug("tab removed");
