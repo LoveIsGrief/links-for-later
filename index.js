@@ -65,8 +65,8 @@ function getInformation(url) {
             reject(lastMessage);
         }
 
-        function onRemoved(tab) {
-            if (tab.id !== tabId) {
+        function onRemoved(removedTabId) {
+            if (removedTabId !== tabId) {
                 return
             }
             console.debug("tab removed");
