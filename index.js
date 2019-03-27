@@ -78,10 +78,13 @@ function getInformation(url) {
             icon: "fingerprint"
         }).then((context) => {
             cookiestoreId = context.cookieStoreId;
+            return browser.tabs.query({currentWindow: true, active: true});
+        }).then((activeTabs) => {
             browser.tabs.create({
                 url: url,
                 active: false,
-                cookieStoreId: cookiestoreId
+                cookieStoreId: cookiestoreId,
+                openerTabId: activeTabs[0].id
             }).then((tab) => {
                 tabId = tab.id;
                 // Work around for https://bugzilla.mozilla.org/show_bug.cgi?id=1397667
